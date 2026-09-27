@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a14">
+<title>AIP Kitchen — протокол питания</title>
+<style>
+:root{
+  --bg:#0d1512;
+  --bg2:#121e19;
+  --card:#17241e;
+  --card2:#1d2d25;
+  --line:#26382e;
+  --txt:#e8f2ec;
+  --dim:#8fa79a;
+  --acc:#5ddc9a;
+  --acc2:#f0b95a;
+  --red:#e2695f;
+  --r:18px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:
+    radial-gradient(1200px 600px at 80% -10%, #1a3026 0%, transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, #1b2b33 0%, transparent 55%),
+    var(--bg);
+  color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  min-height:100vh;
+  padding-bottom:40px;
+}
+
+/* ---------- HEADER ---------- */
+header{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;
+  padding:12px 16px;
+  background:rgba(13,21,18,.82);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:16px;letter-spacing:.2px}
+.brand .logo{
+  width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+  background:linear-gradient(135deg,#2f6b4d,#5ddc9a);font-size:17px;
+  box-shadow:0 4px 14px rgba(93,220,154,.25)
+}
+.brand small{display:block;font-weight:500;font-size:10px;color:var(--dim);letter-spacing:.4px}
+.day-chip{
+  display:flex;align-items:center;gap:7px;
+  background:linear-gradient(135deg,rgba(240,185,90,.16),rgba(240,185,90,.06));
+  border:1px solid rgba(240,185,90,.4);
+  color:var(--acc2);
+  font-weight:800;font-size:13px;
+  padding:9px 14px;border-radius:999px;cursor:pointer;
+  white-space:nowrap;transition:.2s;
+}
+.day-chip:active{transform:scale(.95)}
+.day-chip .dot{width:7px;height:7px;border-radius:50%;background:var(--acc2);box-shadow:0 0 10px var(--acc2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ---------- LAYOUT ---------- */
+main{max-width:860px;margin:0 auto;padding:0 14px}
+.screen{display:none;animation:fade .28s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---------- PROGRESS ---------- */
+.prog{display:flex;gap:6px;padding:16px 2px 4px}
+.prog i{height:4px;flex:1;border-radius:99px;background:var(--line);transition:.3s}
+.prog i.on{background:linear-gradient(90deg,#3f9c6c,var(--acc))}
+
+h1.title{font-size:22px;line-height:1.25;margin:16px 2px 6px;font-weight:800}
+p.sub{color:var(--dim);font-size:13.5px;line-height:1.5;margin:0 2px 16px}
+
+/* ---------- INGREDIENT PICKER ---------- */
+.searchbar{
+  display:flex;align-items:center;gap:9px;
+  background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:11px 14px;margin-bottom:14px;
+}
+.searchbar input{
+  background:none;border:none;outline:none;color:var(--txt);
+  font-size:15px;width:100%;font-family:inherit;
+}
+.searchbar input::placeholder{color:#5d7268}
+
+.cat{margin-bottom:12px;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.cat-h{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 15px;cursor:pointer;user-select:none;font-weight:700;font-size:14px;
+  background:var(--card2);
+}
+.cat-h .cnt{font-size:11px;color:var(--acc);font-weight:700;background:rgba(93,220,154,.13);padding:3px 9px;border-radius:99px}
+.cat-h .arw{transition:.25s;color:var(--dim);font-size:12px}
+.cat.closed .cat-h .arw{transform:rotate(-90deg)}
+.cat-body{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.cat.closed .cat-body{display:none}
+@media(max-width:420px){.cat-body{grid-template-columns:1fr}}
+
+.ing{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);padding:10px 11px;cursor:pointer;
+  transition:.15s;user-select:none;
+}
+.ing:active{background:var(--card2)}
+.ing.sel{background:linear-gradient(90deg,rgba(93,220,154,.14),rgba(93,220,154,.03))}
+.chk{
+  width:21px;height:21px;flex:0 0 21px;border-radius:7px;
+  border:2px solid #35493d;display:grid;place-items:center;
+  font-size:12px;color:transparent;transition:.15s;
+}
+.ing.sel .chk{background:var(--acc);border-color:var(--acc);color:#0d1512;font-weight:900}
+.ing .em{font-size:17px;line-height:1}
+.ing .nm{font-size:13px;flex:1;line-height:1.2}
+.qty{
+  width:56px;background:#0e1815;border:1px solid var(--line);border-radius:9px;
+  color:var(--acc);font-size:12px;padding:6px 6px;text-align:center;outline:none;
+  font-family:inherit;
+}
+.qty:focus{border-color:var(--acc)}
+.qty::placeholder{color:#43564c}
+
+/* ---------- BIG CHOICE BUTTONS ---------- */
+.grid-meal{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+@media(max-width:400px){.grid-meal{grid-template-columns:1fr}}
+.big{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 14px;text-align:center;cursor:pointer;transition:.18s;
+}
+.big:active{transform:scale(.97)}
+.big:hover{border-color:rgba(93,220,154,.5);background:var(--card2)}
+.big .e{font-size:30px;display:block;margin-bottom:7px}
+.big .t{font-weight:700;font-size:14.5px}
+.big .d{font-size:11.5px;color:var(--dim);margin-top:3px}
+
+.grid-time{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.tbtn{
+  background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 6px;text-align:center;cursor:pointer;font-weight:700;font-size:14px;transition:.18s;
+}
+.tbtn:active{transform:scale(.95)}
+.tbtn:hover{border-color:rgba(93,220,154,.5);background:var(--card2)}
+.tbtn small{display:block;font-weight:500;font-size:10.5px;color:var(--dim);margin-top:2px}
+
+/* ---------- TOGGLE ---------- */
+.toggle{
+  display:flex;align-items:center;gap:11px;margin:14px 0 4px;
+  background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;cursor:pointer;
+}
+.toggle .sw{
+  width:42px;height:24px;border-radius:99px;background:#2a3a31;position:relative;flex:0 0 42px;transition:.2s;
+}
+.toggle .sw::after{
+  content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;
+  background:#7b9287;transition:.2s;
+}
+.toggle.on .sw{background:rgba(93,220,154,.3)}
+.toggle.on .sw::after{left:21px;background:var(--acc)}
+.toggle .tt{font-size:13px;line-height:1.35}
+.toggle .tt b{display:block;font-size:13.5px;margin-bottom:2px}
+.toggle .tt span{color:var(--dim);font-size:11.5px}
+
+/* ---------- BUTTONS ---------- */
+.btn{
+  display:block;width:100%;border:none;border-radius:16px;padding:16px;
+  font-size:15.5px;font-weight:800;cursor:pointer;font-family:inherit;
+  background:linear-gradient(135deg,#3f9c6c,#5ddc9a);color:#08130e;
+  box-shadow:0 8px 24px rgba(93,220,154,.2);transition:.18s;margin-top:16px;
+}
+.btn:active{transform:scale(.98)}
+.btn.ghost{
+  background:transparent;border:1px solid var(--line);color:var(--dim);
+  box-shadow:none;font-weight:600;font-size:13.5px;padding:13px;margin-top:9px;
+}
+.btn.ghost:active{background:var(--card)}
+.row{display:flex;gap:9px;margin-top:16px}
+.row .btn{margin-top:0}
+
+.backbar{display:flex;align-items:center;gap:10px;padding:16px 0 2px}
+.back{
+  background:var(--card);border:1px solid var(--line);color:var(--txt);
+  width:38px;height:38px;border-radius:12px;font-size:17px;cursor:pointer;
+  display:grid;place-items:center;transition:.15s;
+}
+.back:active{transform:scale(.92)}
+.backbar .lbl{font-size:12px;color:var(--dim);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+
+/* ---------- RECIPE CARDS ---------- */
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 4px}
+.chip{
+  font-size:11.5px;padding:6px 11px;border-radius:99px;background:var(--card);
+  border:1px solid var(--line);color:var(--dim);font-weight:600;
+}
+.chip b{color:var(--acc);font-weight:700}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;margin-bottom:14px;cursor:pointer;transition:.2s;
+  box-shadow:0 4px 18px rgba(0,0,0,.22);
+}
+.card:active{transform:scale(.985)}
+.card:hover{border-color:rgba(93,220,154,.45)}
+.card .ph{position:relative;height:168px;overflow:hidden;display:grid;place-items:center}
+.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card .ph .ph-e{font-size:52px;opacity:.5;z-index:0}
+.card .ph::after{
+  content:"";position:absolute;inset:0;z-index:2;
+  background:linear-gradient(to top,rgba(13,21,18,.92) 0%,rgba(13,21,18,.15) 55%,transparent 100%);
+}
+.card .tm{
+  position:absolute;top:10px;right:10px;z-index:3;
+  background:rgba(10,17,14,.82);backdrop-filter:blur(6px);
+  color:var(--acc);font-size:11.5px;font-weight:800;padding:6px 11px;border-radius:99px;
+  border:1px solid rgba(93,220,154,.28);
+}
+.card .body{padding:14px 15px 16px;position:relative;z-index:3;margin-top:-34px}
+.card h3{margin:0 0 8px;font-size:16.5px;font-weight:800;line-height:1.25;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.card .meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.tag{font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:#b9cec2}
+.tag.warn{background:rgba(240,185,90,.15);color:var(--acc2)}
+.card .ings{font-size:12px;color:var(--dim);line-height:1.5}
+.card .ings .ok{color:var(--acc)}
+.card .ings .no{color:#c98a6a}
+
+.empty{text-align:center;padding:48px 20px;color:var(--dim)}
+.empty .e{font-size:46px;display:block;margin-bottom:12px;opacity:.7}
+
+/* ---------- RECIPE DETAIL / TIMELINE ---------- */
+.hero{position:relative;height:230px;border-radius:var(--r);overflow:hidden;margin-top:8px;display:grid;place-items:center}
+.hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero .ph-e{font-size:70px;opacity:.45}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(13,21,18,.95),rgba(13,21,18,.05))}
+.hero .h-info{position:absolute;bottom:0;left:0;right:0;padding:16px;z-index:3}
+.hero h2{margin:0 0 6px;font-size:22px;line-height:1.2;font-weight:800;text-shadow:0 2px 10px #000}
+.hero .h-meta{display:flex;gap:7px;flex-wrap:wrap}
+
+.sec-t{font-size:12px;text-transform:uppercase;letter-spacing:.7px;color:var(--dim);font-weight:800;margin:22px 2px 10px}
+.ing-list{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.ing-list div{
+  display:flex;align-items:center;gap:10px;padding:11px 14px;
+  border-bottom:1px solid var(--line);font-size:13.5px;
+}
+.ing-list div:last-child{border-bottom:none}
+.ing-list .st{font-size:13px;width:16px;text-align:center}
+.ing-list .st.y{color:var(--acc)}
+.ing-list .st.n{color:#6d8078}
+
+.tl{position:relative;padding-left:0}
+.step{
+  display:flex;gap:12px;margin-bottom:16px;position:relative;
+}
+.step .num{
+  flex:0 0 30px;width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,#3f9c6c,#5ddc9a);color:#08130e;
+  display:grid;place-items:center;font-weight:900;font-size:13px;z-index:2;
+  box-shadow:0 0 0 4px var(--bg);
+}
+.step .line{position:absolute;left:14.5px;top:30px;bottom:-16px;width:1.5px;background:var(--line)}
+.step:last-child .line{display:none}
+.step .cont{flex:1;min-width:0}
+.step .sph{position:relative;height:130px;border-radius:14px;overflow:hidden;margin-bottom:9px;background:var(--card2);display:grid;place-items:center}
+.step .sph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.step .sph .ph-e{font-size:36px;opacity:.4}
+.step .txt{font-size:14px;line-height:1.55;color:#d5e5db}
+
+.note{
+  background:rgba(240,185,90,.08);border:1px solid rgba(240,185,90,.25);
+  border-radius:14px;padding:13px 15px;font-size:12.5px;line-height:1.5;color:#e5cfa8;margin-top:16px;
+}
+
+footer{text-align:center;color:#40544a;font-size:11px;padding:26px 16px 10px;line-height:1.6}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">🥑</div>
+    <div>AIP Kitchen<small>протокол питания</small></div>
+  </div>
+  <button class="day-chip" id="dayChip"><span class="dot"></span><span id="dayTxt">День —</span></button>
+</header>
+
+<main>
+
+  <!-- ============ ШАГ 1: ИНГРЕДИЕНТЫ ============ -->
+  <section class="screen on" id="s1">
+    <div class="prog"><i class="on"></i><i></i><i></i><i></i></div>
+    <h1 class="title">Что у вас есть дома?</h1>
+    <p class="sub">Отметьте продукты и укажите примерное количество. Сайт запомнит выбор — в следующий раз отмечать заново не придётся.</p>
+
+    <div class="searchbar">
+      <span>🔍</span>
+      <input id="search" placeholder="Поиск продукта…" autocomplete="off">
+    </div>
+
+    <div id="ingWrap"></div>
+
+    <div class="toggle" id="strictToggle">
+      <div class="sw"></div>
+      <div class="tt"><b>Строгий безкрахмальный режим</b><span>Скрыть блюда с бататом, тыквой, свёклой, репой, пастернаком</span></div>
+    </div>
+
+    <button class="btn" id="toMeal">Далее →</button>
+    <button class="btn ghost" id="skipIng">Пропустить — показать все рецепты</button>
+  </section>
+
+  <!-- ============ ШАГ 2: ПРИЁМ ПИЩИ ============ -->
+  <section class="screen" id="s2">
+    <div class="prog"><i class="on"></i><i class="on"></i><i></i><i></i></div>
+    <div class="backbar"><button class="back" data-go="s1">‹</button><span class="lbl">Ингредиенты</span></div>
+    <h1 class="title">Какой приём пищи?</h1>
+    <p class="sub">Выберите, что планируете готовить сейчас.</p>
+    <div class="grid-meal" id="mealGrid"></div>
+  </section>
+
+  <!-- ============ ШАГ 3: ВРЕМЯ ============ -->
+  <section class="screen" id="s3">
+    <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+    <div class="backbar"><button class="back" data-go="s2">‹</button><span class="lbl" id="mealLbl">Приём пищи</span></div>
+    <h1 class="title">Сколько времени готовы потратить?</h1>
+    <p class="sub">Покажем только те блюда, которые укладываются в выбранное время.</p>
+    <div class="grid-time" id="timeGrid"></div>
+    <button class="btn ghost" id="anyTime">Не важно — показать всё</button>
+  </section>
+
+  <!-- ============ ШАГ 4: РЕЗУЛЬТАТЫ ============ -->
+  <section class="screen" id="s4">
+    <div class="prog"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></div>
+    <div class="backbar"><button class="back" data-go="s3">‹</button><span class="lbl">Время</span></div>
+    <h1 class="title" id="resTitle">Подходящие блюда</h1>
+    <div class="chips" id="resChips"></div>
+    <div id="resList"></div>
+  </section>
+
+  <!-- ============ ШАГ 5: РЕЦЕПТ ============ -->
+  <section class="screen" id="s5">
+    <div class="backbar"><button class="back" id="backToList">‹</button><span class="lbl">К списку блюд</span></div>
+    <div id="recipeView"></div>
+  </section>
+
+</main>
+
+<footer>
+  AIP Kitchen · протокол питания при аутоиммунных болезнях<br>
+  Материал носит информационный характер и не заменяет консультацию врача.
+</footer>
+
+<script>
+/* =========================================================
+   ДАННЫЕ: ИНГРЕДИЕНТЫ
+   ========================================================= */
+const CATS = [
+  "Белок: мясо, птица, рыба",
+  "Овощи и зелень",
+  "Жиры и бульоны",
+  "Ягоды и фрукты",
+  "Прочее"
+];
+
+const INGS = [
+  // 0 — Белок
+  {id:"beef",c:0,n:"Говядина",e:"🥩"},
+  {id:"pork",c:0,n:"Свинина",e:"🥓"},
+  {id:"lamb",c:0,n:"Баранина",e:"🍖"},
+  {id:"chicken",c:0,n:"Курица",e:"🍗"},
+  {id:"turkey",c:0,n:"Индейка",e:"🦃"},
+  {id:"duck",c:0,n:"Утка",e:"🦆"},
+  {id:"tongue",c:0,n:"Говяжий язык",e:"🥩"},
+  {id:"liver",c:0,n:"Печень",e:"🫀"},
+  {id:"heart",c:0,n:"Сердце",e:"🫀"},
+  {id:"bones",c:0,n:"Кости для бульона",e:"🦴"},
+  {id:"beef_mince",c:0,n:"Фарш говяжий",e:"🥩"},
+  {id:"pork_mince",c:0,n:"Фарш свиной",e:"🥓"},
+  {id:"turkey_mince",c:0,n:"Фарш индейки",e:"🦃"},
+  {id:"salmon",c:0,n:"Лосось",e:"🐟"},
+  {id:"cod",c:0,n:"Треска",e:"🐟"},
+  {id:"white_fish",c:0,n:"Белая рыба (филе)",e:"🐟"},
+  {id:"mackerel",c:0,n:"Скумбрия",e:"🐟"},
+  {id:"herring",c:0,n:"Сельдь",e:"🐟"},
+  {id:"tuna",c:0,n:"Тунец",e:"🐟"},
+  {id:"sardines",c:0,n:"Сардины",e:"🐟"},
+  {id:"shrimp",c:0,n:"Креветки",e:"🦐"},
+  // 1 — Овощи
+  {id:"pumpkin",c:1,n:"Тыква",e:"🎃"},
+  {id:"zucchini",c:1,n:"Кабачок / цукини",e:"🥒"},
+  {id:"cucumber",c:1,n:"Огурец",e:"🥒"},
+  {id:"sweetpotato",c:1,n:"Батат",e:"🍠"},
+  {id:"carrot",c:1,n:"Морковь",e:"🥕"},
+  {id:"celery",c:1,n:"Сельдерей",e:"🥬"},
+  {id:"beet",c:1,n:"Свёкла",e:"🟣"},
+  {id:"turnip",c:1,n:"Репа",e:"⚪"},
+  {id:"parsnip",c:1,n:"Пастернак",e:"🥕"},
+  {id:"radish",c:1,n:"Редис",e:"🔴"},
+  {id:"broccoli",c:1,n:"Брокколи",e:"🥦"},
+  {id:"cauliflower",c:1,n:"Цветная капуста",e:"🥦"},
+  {id:"brussels",c:1,n:"Брюссельская капуста",e:"🥬"},
+  {id:"cabbage",c:1,n:"Белокочанная капуста",e:"🥬"},
+  {id:"napa",c:1,n:"Пекинская капуста",e:"🥬"},
+  {id:"kale",c:1,n:"Кейл",e:"🥬"},
+  {id:"spinach",c:1,n:"Шпинат",e:"🥬"},
+  {id:"arugula",c:1,n:"Руккола",e:"🥬"},
+  {id:"lettuce",c:1,n:"Листья салата",e:"🥗"},
+  {id:"onion",c:1,n:"Лук",e:"🧅"},
+  {id:"garlic",c:1,n:"Чеснок",e:"🧄"},
+  {id:"ginger",c:1,n:"Имбирь",e:"🫚"},
+  {id:"asparagus",c:1,n:"Спаржа",e:"🌿"},
+  {id:"greenonion",c:1,n:"Зелёный лук",e:"🌿"},
+  {id:"dill",c:1,n:"Укроп",e:"🌿"},
+  {id:"parsley",c:1,n:"Петрушка",e:"🌿"},
+  {id:"basil",c:1,n:"Базилик",e:"🌿"},
+  {id:"thyme",c:1,n:"Чабрец",e:"🌿"},
+  {id:"mint",c:1,n:"Мята",e:"🌿"},
+  {id:"chamomile",c:1,n:"Ромашка",e:"🌼"},
+  {id:"melissa",c:1,n:"Мелисса",e:"🌿"},
+  {id:"avocado",c:1,n:"Авокадо",e:"🥑"},
+  {id:"olives",c:1,n:"Оливки",e:"🫒"},
+  {id:"mushrooms",c:1,n:"Грибы",e:"🍄"},
+  {id:"sauerkraut",c:1,n:"Квашеная капуста",e:"🥬"},
+  {id:"seaweed",c:1,n:"Водоросли",e:"🌊"},
+  // 2 — Жиры
+  {id:"coconut_oil",c:2,n:"Кокосовое масло",e:"🥥"},
+  {id:"olive_oil",c:2,n:"Оливковое масло",e:"🫒"},
+  {id:"animal_fat",c:2,n:"Сало / смалец",e:"🥓"},
+  {id:"duck_fat",c:2,n:"Утиный жир",e:"🦆"},
+  {id:"ghee",c:2,n:"Гхи (топлёное масло)",e:"🧈"},
+  // 3 — Ягоды и фрукты
+  {id:"strawberry",c:3,n:"Клубника",e:"🍓"},
+  {id:"raspberry",c:3,n:"Малина",e:"🍓"},
+  {id:"blueberry",c:3,n:"Голубика",e:"🫐"},
+  {id:"blackberry",c:3,n:"Ежевика",e:"🫐"},
+  {id:"cranberry",c:3,n:"Клюква",e:"🔴"},
+  {id:"currant",c:3,n:"Смородина",e:"🍇"},
+  {id:"banana",c:3,n:"Банан (незрелый)",e:"🍌"},
+  {id:"mango",c:3,n:"Манго",e:"🥭"},
+  {id:"lemon",c:3,n:"Лимон",e:"🍋"},
+  {id:"sea_buckthorn",c:3,n:"Облепиха",e:"🟠"},
+  // 4 — Прочее
+  {id:"coconut_milk",c:4,n:"Кокосовое молоко",e:"🥥"},
+  {id:"carob",c:4,n:"Кэроб",e:"☕"},
+  {id:"chicory",c:4,n:"Цикорий",e:"☕"},
+  {id:"matcha",c:4,n:"Матча",e:"🍵"},
+  {id:"salt",c:4,n:"Соль (морская/гималайская)",e:"🧂"},
+  {id:"turmeric",c:4,n:"Куркума",e:"🟡"},
+  {id:"cinnamon",c:4,n:"Корица",e:"🟤"},
+  {id:"herbs",c:4,n:"Сушёные травы",e:"🌿"},
+  {id:"water",c:4,n:"Вода",e:"💧"},
+  {id:"kombucha",c:4,n:"Комбуча / водный кефир",e:"🍶"}
+];
+
+const ING_MAP = {};
+INGS.forEach(i => ING_MAP[i.id] = i);
+
+/* Крахмалистые овощи — для «строгого режима» */
+const STARCHY = ["sweetpotato","pumpkin","beet","parsnip","turnip","banana","mango"];
+
+/* =========================================================
+   ДАННЫЕ: РЕЦЕПТЫ
+   meal: завтрак / обед / ужин / перекус / десерт
+   ========================================================= */
+const R = [
+/* ---------- ЗАВТРАКИ ---------- */
+{
+ id:"bone_broth", name:"Костный бульон", e:"🍲", meal:["завтрак","обед","ужин"],
+ time:120, kw:"bone,broth,soup", req:["bones"],
+ ing:["bones","onion","carrot","celery","salt","water"],
+ desc:"Основа протокола: коллаген, глицин, восстановление слизистой кишечника.",
+ note:"Варится 8–36 часов. Ставьте на ночь или на весь день — активной работы всего 20 минут.",
+ steps:[
+  {t:"Промойте 1,5 кг говяжьих костей с мясом (суповые, с мозгом, суставы) и сложите в большую кастрюлю.",kw:"raw,beef,bones"},
+  {t:"Добавьте крупно нарезанную морковь, луковицу и стебель сельдерея.",kw:"carrot,onion,celery"},
+  {t:"Залейте 4 л фильтрованной воды, добавьте 2 ст. л. яблочного уксуса (он вытягивает минералы из костей) и 2 ч. л. соли.",kw:"water,pot,pouring"},
+  {t:"Доведите до кипения, снимите серую пенку шумовкой и убавьте огонь до минимума — бульон должен еле кипеть мелкими пузырьками.",kw:"simmering,soup,steam"},
+  {t:"Варите под крышкой 8–36 часов. Чем дольше, тем насыщеннее и полезнее.",kw:"slow,cooking,kitchen"},
+  {t:"Процедите горячий бульон через сито или марлю. Охлаждённый хороший бульон застывает в желе — это признак высокого содержания желатина.",kw:"straining,broth,sieve"}
+ ]
+},
+{
+ id:"beef_boiled", name:"Отварная говядина", e:"🥩", meal:["завтрак","обед"],
+ time:90, kw:"boiled,beef,sliced", req:["beef"],
+ ing:["beef","onion","carrot","parsnip","salt","herbs"],
+ desc:"Плотный белковый завтрак. Готовится сам, ваше участие — 10 минут.",
+ steps:[
+  {t:"Залейте 700 г мякоти говядины холодной водой, доведите до кипения и снимите пену.",kw:"beef,pot,boiling"},
+  {t:"Посолите, убавьте огонь и варите под приоткрытой крышкой 30–40 минут.",kw:"simmering,meat,pot"},
+  {t:"Добавьте очищенную луковицу, морковь и, если есть, корень петрушки или пастернака. Варите ещё 30 минут.",kw:"carrot,onion,vegetables"},
+  {t:"За 20 минут до готовности положите лавровый лист и сушёные травы.",kw:"bay,leaf,spices"},
+  {t:"Достаньте мясо, дайте остыть 10 минут и нарежьте тонкими ломтиками поперёк волокон.",kw:"sliced,beef,board"}
+ ]
+},
+{
+ id:"beef_tongue", name:"Отварной говяжий язык", e:"🥩", meal:["завтрак","ужин"],
+ time:120, kw:"beef,tongue,sliced", req:["tongue"],
+ ing:["tongue","onion","carrot","celery","salt","herbs"],
+ desc:"Нежнейший источник белка, цинка и B12. Идеален холодным на завтрак.",
+ steps:[
+  {t:"Залейте язык холодной водой, доведите до кипения и слейте первую воду.",kw:"tongue,pot,water"},
+  {t:"Снова закипятите воду и опустите язык — важно, чтобы вода была горячей, тогда язык останется мягким.",kw:"boiling,pot,steam"},
+  {t:"Добавьте целую луковицу, морковь и корень сельдерея. Варите на маленьком огне 2–4 часа.",kw:"vegetables,soup,simmering"},
+  {t:"За 30 минут до конца посолите и добавьте лавровый лист. Солить раньше нельзя — язык станет жёстким.",kw:"salt,spices,pot"},
+  {t:"Готовый язык опустите на 2–3 минуты в холодную воду — после этого кожица снимется без усилий.",kw:"cold,water,tongue"},
+  {t:"Оботрите салфеткой, охладите под крышкой в холодильнике и нарежьте тонкими ломтиками — охлаждённый режется легче.",kw:"sliced,tongue,plate"}
+ ]
+},
+{
+ id:"turkey_cutlets", name:"Котлеты из индейки с кабачком", e:"🍗", meal:["завтрак","обед"],
+ time:30, kw:"turkey,cutlets,pan", req:["turkey_mince","zucchini"],
+ ing:["turkey_mince","zucchini","onion","garlic","coconut_oil","turmeric","herbs","salt"],
+ desc:"Луково-кабачковая смесь скрепляет фарш не хуже яйца и делает котлеты сочными.",
+ steps:[
+  {t:"Мелко нарежьте луковицу и потушите её на щедрой порции кокосового масла до мягкости и полупрозрачности.",kw:"onion,frying,pan"},
+  {t:"Добавьте нарезанный кабачок (60–80 г) и держите на огне ещё 3–5 минут.",kw:"zucchini,pan,cooking"},
+  {t:"Переложите лук с кабачком в блендер и пробейте до однородности.",kw:"blender,puree,kitchen"},
+  {t:"Смешайте получившуюся массу с 500 г фарша индейки. Добавьте куркуму, сушёные травы, соль и измельчённый зубчик чеснока.",kw:"mince,mixing,bowl"},
+  {t:"Сформируйте котлеты мокрыми руками и обжарьте на небольшом огне по 6–8 минут с каждой стороны под крышкой.",kw:"cutlets,frying,pan"}
+ ]
+},
+{
+ id:"baked_sweetpotato", name:"Запечённый батат с кокосовым маслом", e:"🍠", meal:["завтрак","ужин"],
+ time:50, kw:"baked,sweet,potato", req:["sweetpotato"],
+ ing:["sweetpotato","coconut_oil","garlic","herbs","salt"],
+ desc:"Углеводы для поддержки щитовидной железы. Особенно хорош на ужин.",
+ starch:true,
+ steps:[
+  {t:"Разогрейте духовку до 180 °C. Вымойте и нарежьте батат дольками, не очищая кожицу.",kw:"sweet,potato,cutting"},
+  {t:"Смешайте дольки с 2 ст. л. кокосового масла, солью, чесночным порошком и разрешёнными травами.",kw:"seasoning,oil,bowl"},
+  {t:"Выложите в один слой на противень с пергаментом.",kw:"baking,tray,oven"},
+  {t:"Запекайте 40–50 минут до мягкости, перевернув один раз в середине.",kw:"roasted,sweet,potato"}
+ ]
+},
+{
+ id:"baked_pumpkin", name:"Запечённая тыква с корицей", e:"🎃", meal:["завтрак","ужин"],
+ time:20, kw:"baked,pumpkin,roasted", req:["pumpkin"],
+ ing:["pumpkin","olive_oil","cinnamon","salt"],
+ desc:"Тёплый сладковатый гарнир или самостоятельное блюдо.",
+ starch:true,
+ steps:[
+  {t:"Разогрейте духовку до 200 °C. Разрежьте тыкву пополам и ложкой удалите семечки.",kw:"pumpkin,cutting,seeds"},
+  {t:"Нарежьте дольками толщиной около 2,5 см.",kw:"sliced,pumpkin,board"},
+  {t:"Выложите на противень, сбрызните оливковым маслом, посыпьте корицей и солью.",kw:"seasoning,oil,pumpkin"},
+  {t:"Запекайте 18–20 минут до мягкости и лёгкой карамелизации краёв.",kw:"roasted,pumpkin,oven"}
+ ]
+},
+{
+ id:"avocado_beet_salad", name:"Салат из свёклы, сельдерея и авокадо", e:"🥗", meal:["завтрак","обед","перекус"],
+ time:10, kw:"beet,avocado,salad", req:["beet","avocado"],
+ ing:["beet","celery","avocado","olive_oil","salt","lemon"],
+ desc:"Кремовая текстура авокадо + сладость свёклы. 5 минут работы.",
+ starch:true,
+ steps:[
+  {t:"Отварную свёклу (1 шт.) и половину мягкого авокадо нарежьте кубиками или полукольцами.",kw:"beet,avocado,cutting"},
+  {t:"Стебель сельдерея нарежьте тонкими колечками.",kw:"celery,slicing,board"},
+  {t:"Соедините всё в миске. Авокадо можно слегка размять вилкой для кремовой консистенции.",kw:"mixing,bowl,salad"},
+  {t:"Заправьте 1 ст. л. оливкового масла, сбрызните лимоном, посолите и аккуратно перемешайте.",kw:"olive,oil,dressing"}
+ ]
+},
+{
+ id:"napa_cucumber_salad", name:"Салат из пекинской капусты с огурцом", e:"🥬", meal:["завтрак","обед","ужин"],
+ time:10, kw:"napa,cabbage,cucumber,salad", req:["napa","cucumber"],
+ ing:["napa","cucumber","olive_oil","lemon","salt","dill"],
+ desc:"Лёгкий, хрустящий, идеально к жирному мясу.",
+ steps:[
+  {t:"Шинкуйте четверть кочана пекинской капусты острым ножом как можно тоньше — так салат получится нежным.",kw:"napa,cabbage,shredding"},
+  {t:"Огурец нарежьте кружочками, затем каждый кружок разрежьте на четыре части.",kw:"cucumber,slicing,board"},
+  {t:"Соедините овощи, добавьте мелко нарезанный укроп.",kw:"mixing,bowl,herbs"},
+  {t:"Смешайте оливковое масло с соком лимона, полейте салат и посолите.",kw:"dressing,lemon,oil"}
+ ]
+},
+{
+ id:"chicory", name:"Цикорий с кокосовым молоком", e:"☕", meal:["завтрак","десерт"],
+ time:10, kw:"chicory,drink,cup", req:["chicory"],
+ ing:["chicory","coconut_milk","water","turmeric","cinnamon"],
+ desc:"Замена кофе: не содержит кофеина, поддерживает обмен веществ и щитовидную железу.",
+ steps:[
+  {t:"Залейте 2 ч. л. измельчённого корня цикория 200 мл кипятка.",kw:"chicory,powder,cup"},
+  {t:"Кипятите на слабом огне 15 минут.",kw:"simmering,pot,drink"},
+  {t:"Снимите с огня, добавьте 50 мл кокосового молока и дайте настояться 5 минут.",kw:"coconut,milk,pouring"},
+  {t:"Процедите через мелкое сито. По желанию добавьте щепотку куркумы и корицы.",kw:"straining,cup,drink"}
+ ]
+},
+{
+ id:"carob_drink", name:"Кэроб с кокосовым молоком", e:"☕", meal:["завтрак","десерт","перекус"],
+ time:5, kw:"carob,cocoa,drink", req:["carob","coconut_milk"],
+ ing:["carob","coconut_milk","water","cinnamon"],
+ desc:"Вкус какао без кофеина и щавелевой кислоты. В 3 раза больше кальция, чем в какао.",
+ steps:[
+  {t:"В небольшой кастрюльке соедините 50 мл кокосового молока, 200 мл воды и сразу добавьте 2 ч. л. кэроба — так не будет комочков.",kw:"carob,pot,milk"},
+  {t:"Поставьте на средний огонь и доведите до кипения, тщательно помешивая ложкой.",kw:"stirring,pot,drink"},
+  {t:"Сразу снимите с плиты — напиток легко «убегает».",kw:"cup,steam,drink"},
+  {t:"Подавайте горячим или слегка остуженным, по желанию с корицей.",kw:"hot,chocolate,cup"}
+ ]
+},
+{
+ id:"matcha", name:"Матча с кокосовым молоком", e:"🍵", meal:["перекус","завтрак"],
+ time:5, kw:"matcha,green,tea", req:["matcha"],
+ ing:["matcha","water","coconut_milk"],
+ desc:"В 100 раз больше антиоксидантов, чем в обычном зелёном чае.",
+ steps:[
+  {t:"Просейте 1 ч. л. порошка матчи через ситечко в пиалу — так не будет комков.",kw:"matcha,powder,sieve"},
+  {t:"Вскипятите воду и дайте ей постоять 4–5 минут, чтобы остыла до ~80 °C.",kw:"kettle,water,steam"},
+  {t:"Залейте матчу 40 мл воды и взбейте венчиком или блендером до однородной пены.",kw:"whisk,matcha,bowl"},
+  {t:"По желанию добавьте немного кокосового молока и размешайте.",kw:"matcha,latte,cup"}
+ ]
+},
+
+/* ---------- ОБЕДЫ ---------- */
+{
+ id:"baked_cod", name:"Запечённая треска с лимоном", e:"🐟", meal:["обед","ужин"],
+ time:20, kw:"baked,cod,fish,lemon", req:["cod","lemon"],
+ ing:["cod","lemon","olive_oil","parsley","salt"],
+ desc:"Максимум омега-3 при минимуме усилий. 20 минут от холодильника до стола.",
+ steps:[
+  {t:"Разогрейте духовку до 180 °C. Смешайте 3 ст. л. разрешённого жира, 3 ст. л. лимонного сока и 2 ст. л. лимонной цедры.",kw:"lemon,oil,mixing"},
+  {t:"Выложите филе трески (170 г) в форму для запекания и полейте лимонным маслом.",kw:"fish,baking,dish"},
+  {t:"Посолите и отправьте в духовку на 15 минут.",kw:"oven,baking,fish"},
+  {t:"Подавайте горячей, щедро посыпав нарезанной петрушкой.",kw:"parsley,fish,plate"}
+ ]
+},
+{
+ id:"fish_cutlets", name:"Рыбные котлеты с имбирём", e:"🐟", meal:["завтрак","обед"],
+ time:20, kw:"fish,cakes,patty", req:["white_fish"],
+ ing:["white_fish","coconut_milk","garlic","ginger","coconut_oil","salt"],
+ desc:"Нежные котлетки без яйца и муки — кокосовые сливки отлично скрепляют фарш.",
+ steps:[
+  {t:"Разогрейте духовку до 180 °C. Смешайте 450 г филе белой рыбы, 3 ст. л. кокосовых сливок, 2 зубчика чеснока, 1 ст. л. натёртого имбиря и зелень.",kw:"fish,ingredients,bowl"},
+  {t:"Измельчите всё блендером до однородного фарша.",kw:"blender,mince,kitchen"},
+  {t:"Сформируйте тефтельки влажными руками.",kw:"shaping,patty,hands"},
+  {t:"Обжарьте на кокосовом масле по 4–5 минут с каждой стороны или запеките 15 минут в духовке.",kw:"frying,fish,cakes"}
+ ]
+},
+{
+ id:"salmon_asparagus", name:"Лосось со спаржей", e:"🐟", meal:["ужин","обед"],
+ time:20, kw:"salmon,asparagus,baked", req:["salmon","asparagus"],
+ ing:["salmon","asparagus","olive_oil","lemon","salt","dill"],
+ desc:"Классика омега-3. Один противень — ноль посуды.",
+ steps:[
+  {t:"Разогрейте духовку до 200 °C. Выложите стейк лосося и пучок спаржи на противень с пергаментом.",kw:"salmon,asparagus,tray"},
+  {t:"Сбрызните оливковым маслом, посолите, добавьте дольки лимона.",kw:"olive,oil,lemon"},
+  {t:"Запекайте 12–15 минут — лосось должен остаться слегка розовым внутри.",kw:"baked,salmon,oven"},
+  {t:"Посыпьте укропом и подавайте сразу.",kw:"dill,salmon,plate"}
+ ]
+},
+{
+ id:"chevapchichi", name:"Чевапчичи", e:"🍖", meal:["обед","ужин"],
+ time:45, kw:"sausage,grilled,minced,meat", req:["beef_mince","pork_mince"],
+ ing:["beef_mince","pork_mince","onion","garlic","basil","turmeric","salt"],
+ desc:"Сочные колбаски без оболочки и без яиц. Отлично замораживаются.",
+ steps:[
+  {t:"Прокрутите через мясорубку 250 г свиного и 250 г говяжьего фарша вместе с луковицей и зубчиком чеснока.",kw:"mince,grinder,meat"},
+  {t:"Добавьте соль и приправы (базилик, розмарин, куркума). Хорошо вымешайте и уберите в холодильник на 6 часов — фарш станет плотным.",kw:"mixing,bowl,spices"},
+  {t:"Сформируйте колбаски руками — масса пластичная и не разваливается. Для одинакового размера можно выдавить через обрезанное горлышко бутылки.",kw:"shaping,sausage,hands"},
+  {t:"Готовьте на пару, на гриле или на сковороде под крышкой в небольшом количестве жира, который выделит сам фарш.",kw:"grilling,sausage,pan"},
+  {t:"Обжаривайте до румяной корочки со всех сторон, примерно 15 минут.",kw:"grilled,sausage,plate"}
+ ]
+},
+{
+ id:"cauliflower_puree", name:"Пюре из цветной капусты с чесноком", e:"🥦", meal:["обед","ужин"],
+ time:20, kw:"cauliflower,puree,mashed", req:["cauliflower"],
+ ing:["cauliflower","garlic","duck_fat","salt"],
+ desc:"Замена картофельному пюре. Кремовое, сытное, без крахмала.",
+ steps:[
+  {t:"Разберите большую головку цветной капусты на соцветия и очистите 3 зубчика чеснока, оставив их целыми.",kw:"cauliflower,garlic,cutting"},
+  {t:"Доведите литр воды до кипения, опустите капусту и чеснок, варите 10 минут до готовности.",kw:"boiling,cauliflower,pot"},
+  {t:"Слейте воду и переложите капусту с чесноком в блендер с S-образным лезвием.",kw:"blender,cauliflower,kitchen"},
+  {t:"Добавьте 2 ст. л. утиного жира (или кокосового масла) и измельчите до однородной кремовой массы.",kw:"blending,puree,cream"},
+  {t:"Посолите по вкусу и подавайте горячим.",kw:"mashed,puree,bowl"}
+ ]
+},
+{
+ id:"golubtsy", name:"Голубцы в капустных листьях", e:"🥬", meal:["обед","ужин"],
+ time:50, kw:"cabbage,rolls,stuffed", req:["beef_mince","cabbage"],
+ ing:["beef_mince","cabbage","cauliflower","sweetpotato","garlic","basil","olive_oil","salt"],
+ desc:"Вместо риса — измельчённая цветная капуста. Полное попадание в АИП.",
+ starch:true,
+ steps:[
+  {t:"Аккуратно разберите кочан капусты на листья и опустите их в кипяток на 2–3 минуты, пока не станут мягкими.",kw:"cabbage,leaves,boiling"},
+  {t:"Цветную капусту и батат измельчите в блендере сырыми — капуста даёт текстуру риса.",kw:"cauliflower,blender,vegetables"},
+  {t:"Смешайте 300 г мясного фарша с овощной массой, посолите, добавьте базилик и чеснок.",kw:"mince,mixing,bowl"},
+  {t:"Положите начинку в капустный лист и аккуратно заверните конвертиком.",kw:"wrapping,cabbage,rolls"},
+  {t:"Готовьте 30 минут под «шапкой» из тёртой моркови или на пару.",kw:"steaming,cabbage,pot"},
+  {t:"Подавайте с майонезом из кокосового молока.",kw:"cabbage,rolls,plate"}
+ ]
+},
+{
+ id:"liver_onion", name:"Печень, тушёная с луком", e:"🫀", meal:["обед","ужин"],
+ time:20, kw:"liver,onion,pan,fried", req:["liver","onion"],
+ ing:["liver","onion","animal_fat","salt","herbs"],
+ desc:"Рекордсмен по витамину B12, железу и меди. Готовится за 20 минут.",
+ steps:[
+  {t:"Промойте и очистите печень от плёнок, нарежьте кусочками 2–3 см.",kw:"liver,cutting,board"},
+  {t:"Нарежьте луковицу полукольцами и обжарьте на смальце до золотистого цвета.",kw:"onion,frying,pan"},
+  {t:"Добавьте печень и обжаривайте 3–4 минуты на сильном огне, не пересушивая.",kw:"liver,frying,pan"},
+  {t:"Убавьте огонь, посолите, добавьте травы и тушите под крышкой 7–8 минут.",kw:"simmering,liver,pan"}
+ ]
+},
+{
+ id:"shrimp_broccoli", name:"Креветки с брокколи", e:"🦐", meal:["обед","ужин"],
+ time:10, kw:"shrimp,broccoli,stirfry", req:["shrimp","broccoli"],
+ ing:["shrimp","broccoli","coconut_oil","garlic","ginger","salt"],
+ desc:"Самый быстрый ужин в списке. 10 минут — и готово.",
+ steps:[
+  {t:"Разберите брокколи на соцветия и отварите на пару 4–5 минут — она должна остаться ярко-зелёной и хрустящей.",kw:"broccoli,steaming,green"},
+  {t:"Разогрейте кокосовое масло в воке, добавьте измельчённый чеснок и имбирь, прогрейте 30 секунд.",kw:"garlic,ginger,pan"},
+  {t:"Добавьте креветки и обжаривайте 2–3 минуты до розового цвета.",kw:"shrimp,frying,pan"},
+  {t:"Верните брокколи, посолите, перемешайте и прогрейте минуту.",kw:"stirfry,shrimp,broccoli"}
+ ]
+},
+{
+ id:"pumpkin_soup", name:"Тыквенный крем-суп на костном бульоне", e:"🎃", meal:["обед","ужин"],
+ time:30, kw:"pumpkin,soup,cream", req:["pumpkin","bones"],
+ ing:["pumpkin","bones","onion","garlic","coconut_milk","ginger","salt","turmeric"],
+ desc:"Согревающий, насыщенный, с целебным бульоном в основе.",
+ starch:true,
+ steps:[
+  {t:"Обжарьте на кокосовом масле нарезанный лук, чеснок и имбирь до аромата.",kw:"onion,garlic,frying"},
+  {t:"Добавьте тыкву, нарезанную кубиками, и прогрейте 3 минуты.",kw:"pumpkin,pan,cooking"},
+  {t:"Залейте 700 мл костного бульона так, чтобы жидкость покрывала овощи. Варите 20 минут до мягкости тыквы.",kw:"broth,soup,pot"},
+  {t:"Пробейте блендером до однородности, добавьте 100 мл кокосового молока, куркуму и соль.",kw:"blender,soup,cream"},
+  {t:"Прогрейте ещё 2 минуты, не доводя до кипения, и подавайте.",kw:"soup,bowl,steam"}
+ ]
+},
+{
+ id:"fish_soup", name:"Рыбный суп без картофеля", e:"🐟", meal:["обед"],
+ time:45, kw:"fish,soup,bowl", req:["white_fish","carrot"],
+ ing:["white_fish","carrot","onion","celery","parsnip","dill","salt","water"],
+ desc:"Лёгкий, прозрачный, с корнеплодами вместо картофеля.",
+ steps:[
+  {t:"Вскипятите 1,5 л воды, добавьте нарезанные морковь, лук, сельдерей и пастернак.",kw:"vegetables,pot,boiling"},
+  {t:"Варите 20 минут на среднем огне до мягкости корнеплодов.",kw:"soup,simmering,pot"},
+  {t:"Добавьте нарезанное филе белой рыбы и варите ещё 10 минут.",kw:"fish,soup,pot"},
+  {t:"Посолите, добавьте лавровый лист и укроп, дайте настояться 5 минут под крышкой.",kw:"dill,soup,herbs"}
+ ]
+},
+{
+ id:"lamb_stew", name:"Тушёная баранина с корнеплодами", e:"🍖", meal:["обед","ужин"],
+ time:90, kw:"lamb,stew,pot", req:["lamb","carrot","turnip"],
+ ing:["lamb","carrot","turnip","parsnip","onion","garlic","animal_fat","salt","herbs"],
+ desc:"Сытное зимнее блюдо. Мясо тает во рту.",
+ starch:true,
+ steps:[
+  {t:"Нарежьте баранину крупными кусками и обжарьте на смальце до румяной корочки.",kw:"lamb,frying,pan"},
+  {t:"Добавьте нарезанный лук и чеснок, обжаривайте 3 минуты.",kw:"onion,garlic,frying"},
+  {t:"Переложите в кастрюлю с толстым дном, залейте водой так, чтобы она едва покрывала мясо.",kw:"stew,pot,water"},
+  {t:"Тушите под крышкой на минимальном огне 1 час.",kw:"simmering,stew,pot"},
+  {t:"Добавьте нарезанные корнеплоды: морковь, репу, пастернак. Тушите ещё 30 минут.",kw:"vegetables,stew,pot"},
+  {t:"Посолите, добавьте травы и дайте настояться 10 минут перед подачей.",kw:"stew,bowl,herbs"}
+ ]
+},
+{
+ id:"cabbage_salad", name:"Салат из капусты, огурца и лука", e:"🥗", meal:["обед","ужин","перекус"],
+ time:10, kw:"cabbage,salad,fresh", req:["cabbage","cucumber"],
+ ing:["cabbage","cucumber","onion","olive_oil","lemon","salt","dill"],
+ desc:"Готовится каждый день и отлично хранится несколько суток.",
+ steps:[
+  {t:"Нашинкуйте 2–3 вида капусты (белокочанную, краснокочанную, пекинскую).",kw:"cabbage,shredding,knife"},
+  {t:"Положите в большую миску, добавьте оливковое масло и щепотку соли.",kw:"cabbage,oil,bowl"},
+  {t:"Мните капусту руками 5–10 минут, пока жёсткие волокна не начнут разрушаться и не выступит сок. Объём заметно уменьшится.",kw:"massage,cabbage,hands"},
+  {t:"Смешайте с нарезанным луком, огурцом, лимонным соком и укропом.",kw:"cucumber,onion,mixing"}
+ ]
+},
+{
+ id:"celery_radish_salad", name:"Салат с сельдереем, редисом и огурцами", e:"🥗", meal:["обед","ужин"],
+ time:10, kw:"radish,celery,salad", req:["celery","radish","cucumber"],
+ ing:["celery","radish","cucumber","onion","dill","olive_oil","salt"],
+ desc:"Хрустящий, освежающий, с горчинкой редиса.",
+ steps:[
+  {t:"Овощи вымойте, у редиса обрежьте хвостики.",kw:"vegetables,washing,radish"},
+  {t:"Огурцы нарежьте полудольками, отправьте в салатник.",kw:"cucumber,slicing,bowl"},
+  {t:"Редис нарежьте довольно крупно — так он сохранит хруст.",kw:"radish,slicing,board"},
+  {t:"Стебель сельдерея очистите от грубых волокон, разрежьте вдоль, затем на полукруглые сегменты.",kw:"celery,cutting,board"},
+  {t:"Покрошите укроп, посолите, заправьте оливковым маслом и перемешайте.",kw:"dill,dressing,salad"}
+ ]
+},
+
+/* ---------- УЖИНЫ ---------- */
+{
+ id:"steak_veg", name:"Стейк с овощами на гриле", e:"🥩", meal:["ужин","обед"],
+ time:20, kw:"steak,grilled,vegetables", req:["beef","zucchini"],
+ ing:["beef","zucchini","pumpkin","olive_oil","garlic","salt","herbs"],
+ desc:"Быстрый ужин: сначала овощи, потом мясо на той же сковороде.",
+ starch:true,
+ steps:[
+  {t:"Достаньте стейк из холодильника за 20 минут до готовки — мясо должно согреться до комнатной температуры.",kw:"steak,meat,kitchen"},
+  {t:"Нарежьте кабачок и тыкву толстыми ломтиками, сбрызните оливковым маслом и посолите.",kw:"zucchini,pumpkin,cutting"},
+  {t:"Обжарьте овощи на раскалённой сковороде-гриль по 4 минуты с каждой стороны. Отложите.",kw:"grilling,vegetables,pan"},
+  {t:"На той же сковороде обжарьте стейк по 3–4 минуты с каждой стороны для средней прожарки.",kw:"steak,grilling,pan"},
+  {t:"Дайте мясу отдохнуть 5 минут под фольгой, затем нарежьте и подавайте с овощами.",kw:"steak,resting,plate"}
+ ]
+},
+{
+ id:"broccoli_side", name:"Брокколи на пару с оливковым маслом", e:"🥦", meal:["ужин","обед","перекус"],
+ time:10, kw:"broccoli,steamed,green", req:["broccoli","olive_oil"],
+ ing:["broccoli","olive_oil","garlic","lemon","salt"],
+ desc:"Простой гарнир, который спасает любой ужин.",
+ steps:[
+  {t:"Разберите брокколи на соцветия и промойте.",kw:"broccoli,cutting,washing"},
+  {t:"Готовьте на пару 5–6 минут — стебель должен протыкаться, но оставаться упругим.",kw:"steaming,broccoli,pot"},
+  {t:"Переложите в миску, сбрызните оливковым маслом и лимонным соком.",kw:"olive,oil,lemon"},
+  {t:"Посолите, добавьте измельчённый чеснок и аккуратно перемешайте.",kw:"garlic,broccoli,mixing"}
+ ]
+},
+{
+ id:"turkey_baked", name:"Индейка, запечённая с тыквой и свёклой", e:"🦃", meal:["ужин","обед"],
+ time:50, kw:"turkey,roasted,vegetables", req:["turkey","pumpkin"],
+ ing:["turkey","pumpkin","beet","onion","garlic","olive_oil","salt","herbs"],
+ desc:"Один противень — полноценный ужин с белком и углеводами.",
+ starch:true,
+ steps:[
+  {t:"Разогрейте духовку до 190 °C. Нарежьте тыкву и свёклу кубиками 3 см.",kw:"pumpkin,beet,cutting"},
+  {t:"Выложите овощи и куски индейки на противень в один слой.",kw:"turkey,tray,vegetables"},
+  {t:"Сбрызните оливковым маслом, посыпьте солью, травами и измельчённым чесноком.",kw:"seasoning,oil,garlic"},
+  {t:"Запекайте 40–45 минут, перевернув один раз в середине.",kw:"roasted,oven,turkey"},
+  {t:"Проверьте готовность: сок из мяса должен быть прозрачным.",kw:"turkey,roasted,plate"}
+ ]
+},
+{
+ id:"sauerkraut", name:"Квашеная капуста (домашняя)", e:"🥬", meal:["ужин","обед","перекус"],
+ time:30, kw:"sauerkraut,fermented,cabbage", req:["cabbage"],
+ ing:["cabbage","carrot","salt"],
+ desc:"Живой пробиотик. Ешьте по 100–200 г 3 раза в неделю.",
+ steps:[
+  {t:"Возьмите плотный вилок белокочанной капусты, уберите кочерыжку и нашинкуйте соломкой. Добавьте морковь, натёртую на крупной тёрке.",kw:"cabbage,carrot,shredding"},
+  {t:"Перемешайте в большой таре и помните руками, чтобы пошёл сок.",kw:"massage,cabbage,bowl"},
+  {t:"Добавьте 2 ст. л. морской соли, перемешайте и очень плотно уложите в тару для засолки.",kw:"salt,jar,packing"},
+  {t:"Придавите гнётом так, чтобы вся капуста была под соком. Если сока мало — долейте подсоленную воду.",kw:"weight,jar,fermentation"},
+  {t:"Держите 2 дня при комнатной температуре, периодически прокалывая вилкой (иначе капуста будет горчить).",kw:"fermentation,jar,kitchen"},
+  {t:"Ещё на день уберите под гнёт в холодильник — и можно есть.",kw:"sauerkraut,jar,fresh"}
+ ]
+},
+
+/* ---------- ПЕРЕКУСЫ ---------- */
+{
+ id:"salo_cucumber", name:"Сало с огурцом и листьями салата", e:"🥓", meal:["перекус"],
+ time:5, kw:"salo,lard,cucumber", req:["animal_fat","cucumber"],
+ ing:["animal_fat","cucumber","lettuce","garlic","salt"],
+ desc:"Быстрый жировой перекус, который реально насыщает.",
+ steps:[
+  {t:"Домашнее сало нарежьте тонкими ломтиками.",kw:"salo,lard,slicing"},
+  {t:"Огурец нарежьте кружочками, листья салата промойте и обсушите.",kw:"cucumber,lettuce,washing"},
+  {t:"Выложите сало на лист салата, сверху — огурец и долька чеснока.",kw:"salo,cucumber,plate"},
+  {t:"Посолите и ешьте сразу.",kw:"snack,plate,fresh"}
+ ]
+},
+{
+ id:"holodets", name:"Холодец", e:"🍮", meal:["перекус","ужин"],
+ time:120, kw:"holodets,aspic,jelly,meat", req:["bones"],
+ ing:["bones","beef","onion","carrot","garlic","salt","herbs"],
+ desc:"Источник глицина и коллагена. Готовится долго, но ваше участие — 15 минут.",
+ note:"Варится 5+ часов. Указанное время — активная работа + первые 2 часа.",
+ steps:[
+  {t:"Поместите мясо и кости (говяжий коленный сустав, ножки, рульки) в кастрюлю, залейте водой и поставьте на плиту.",kw:"meat,bones,pot"},
+  {t:"С момента закипания тщательно собирайте пенку шумовкой. Можно слить первую воду и залить свежей — пены будет меньше.",kw:"skimming,foam,pot"},
+  {t:"Варите на минимальном огне 5 часов под крышкой, снимая лишний жир сверху.",kw:"simmering,pot,steam"},
+  {t:"За час до конца добавьте очищенные лук и морковь, за 20 минут — соль и специи.",kw:"vegetables,pot,salt"},
+  {t:"Достаньте мясо и овощи, бульон процедите через марлю. Мясо отделите от костей и измельчите.",kw:"straining,broth,meat"},
+  {t:"Разложите мясо по формам, добавьте чеснок и залейте прозрачным бульоном. Остудите и уберите в холодильник до застывания.",kw:"forms,aspic,fridge"}
+ ]
+},
+{
+ id:"avocado_snack", name:"Авокадо с оливковым маслом и солью", e:"🥑", meal:["перекус","завтрак"],
+ time:5, kw:"avocado,olive,oil,salt", req:["avocado","olive_oil"],
+ ing:["avocado","olive_oil","salt","lemon"],
+ desc:"Максимально простой источник полезных жиров.",
+ steps:[
+  {t:"Разрежьте спелое авокадо пополам и удалите косточку.",kw:"avocado,cutting,knife"},
+  {t:"Сбрызните оливковым маслом и лимонным соком.",kw:"olive,oil,lemon"},
+  {t:"Посыпьте крупной морской или гималайской солью.",kw:"salt,avocado,plate"},
+  {t:"Ешьте ложкой прямо из кожуры — так проще всего.",kw:"avocado,spoon,eating"}
+ ]
+},
+{
+ id:"avocado_cucumber_salad", name:"Салат из авокадо и огурца", e:"🥒", meal:["перекус","ужин"],
+ time:10, kw:"avocado,cucumber,salad", req:["avocado","cucumber"],
+ ing:["avocado","cucumber","lettuce","olive_oil","lemon","salt","dill"],
+ desc:"Лёгкий и освежающий. Хорош с остатками языка или рыбы.",
+ steps:[
+  {t:"Авокадо нарежьте кубиками, огурец — полукольцами.",kw:"avocado,cucumber,cutting"},
+  {t:"Листья салата порвите руками — так они лучше держат форму.",kw:"lettuce,hands,salad"},
+  {t:"Соберите всё в миску, добавьте укроп.",kw:"bowl,herbs,salad"},
+  {t:"Заправьте оливковым маслом и лимонным соком, посолите, аккуратно перемешайте.",kw:"dressing,olive,oil"}
+ ]
+},
+{
+ id:"olives_herbs", name:"Оливки с зеленью", e:"🫒", meal:["перекус"],
+ time:5, kw:"olives,herbs,plate", req:["olives"],
+ ing:["olives","olive_oil","herbs","lemon"],
+ desc:"Быстрый перекус из холодильника. Главное — берите оливки без Е-добавок.",
+ steps:[
+  {t:"Достаньте оливки из рассола и обсушите.",kw:"olives,jar,plate"},
+  {t:"Сбрызните оливковым маслом и лимонным соком.",kw:"olive,oil,lemon"},
+  {t:"Посыпьте сушёными травами (орегано, тимьян) и перемешайте.",kw:"herbs,olives,mixing"}
+ ]
+},
+{
+ id:"coconut_mayo", name:"Майонез из кокосового молока", e:"🥣", meal:["перекус","обед"],
+ time:5, kw:"mayo,sauce,coconut", req:["coconut_milk","olive_oil"],
+ ing:["coconut_milk","olive_oil","lemon","turmeric","salt"],
+ desc:"Соус, который спасает вкус любых овощей и мяса.",
+ steps:[
+  {t:"Смешайте 50 мл кокосового молока и 100 мл оливкового масла в высоком стакане для взбивания.",kw:"coconut,milk,oil"},
+  {t:"Добавьте 1/3 ст. л. хрена, куркуму и 1/3 ч. л. соли.",kw:"spices,salt,mixture"},
+  {t:"Взбивайте погружным блендером, пока смесь не начнёт превращаться в эмульсию.",kw:"blender,whisk,sauce"},
+  {t:"Добавьте 1 ст. л. лимонного сока и взбивайте до загустения. Заправьте по вкусу.",kw:"lemon,sauce,cream"}
+ ]
+},
+{
+ id:"thyme_tea", name:"Чай с чабрецом", e:"🌿", meal:["перекус","ужин"],
+ time:5, kw:"thyme,tea,herbal", req:["thyme"],
+ ing:["thyme","water"],
+ desc:"Расширяет сосуды, мягко снижает давление, помогает заснуть.",
+ steps:[
+  {t:"Запарьте 1 ч. л. чабреца 200 мл кипятка.",kw:"thyme,teapot,water"},
+  {t:"Дайте настояться 8–10 минут под крышкой.",kw:"tea,steeping,cup"},
+  {t:"Пейте тёплым, не спеша.",kw:"tea,cup,herbal"}
+ ]
+},
+{
+ id:"mint_tea", name:"Чай с мятой", e:"🌿", meal:["перекус"],
+ time:5, kw:"mint,tea,fresh", req:["mint"],
+ ing:["mint","water"],
+ desc:"Бодрит, борется с бактериями, помогает при респираторных заболеваниях.",
+ steps:[
+  {t:"Положите 1 ст. л. мяты в чашку.",kw:"mint,leaves,cup"},
+  {t:"Залейте кипятком (500 мл) и накройте.",kw:"water,kettle,steam"},
+  {t:"Через 10 минут чай готов.",kw:"tea,mint,cup"}
+ ]
+},
+{
+ id:"chamomile_tea", name:"Чай с ромашкой", e:"🌼", meal:["перекус","ужин"],
+ time:10, kw:"chamomile,tea,flowers", req:["chamomile"],
+ ing:["chamomile","water"],
+ desc:"Мягкое успокаивающее средство и помощник пищеварению.",
+ steps:[
+  {t:"Залейте 1 ч. л. сушёной ромашки водой, доведённой до кипения, но не кипятите её — так теряется до 70% пользы.",kw:"chamomile,water,cup"},
+  {t:"Плотно накройте крышкой и дайте настояться 15 минут.",kw:"steeping,tea,cover"},
+  {t:"Пейте тёплым.",kw:"chamomile,tea,cup"}
+ ]
+},
+{
+ id:"melissa_tea", name:"Чай с мелиссой", e:"🌿", meal:["перекус","ужин"],
+ time:5, kw:"melissa,lemon,balm,tea", req:["melissa"],
+ ing:["melissa","water"],
+ desc:"Снимает напряжение, успокаивает желудок, устраняет тошноту.",
+ steps:[
+  {t:"Залейте 1 ст. л. листьев мелиссы 200 мл только что закипевшей воды.",kw:"melissa,leaves,cup"},
+  {t:"Дайте остыть до комфортной температуры — и можно пить.",kw:"tea,cup,steam"},
+  {t:"Пейте при стрессе, бессоннице или тяжести в животе.",kw:"tea,relax,cup"}
+ ]
+},
+{
+ id:"seabuckthorn_tea", name:"Чай с облепихой", e:"🟠", meal:["перекус","завтрак"],
+ time:10, kw:"sea,buckthorn,tea,orange", req:["sea_buckthorn"],
+ ing:["sea_buckthorn","water","cinnamon","ginger"],
+ desc:"Кладовая витаминов. Разминайте ягоды только вручную и в нержавейке.",
+ steps:[
+  {t:"Очистите 150 г облепихи от веточек и листьев, промойте и разомните ягоды руками (не блендером — контакт с железом разрушает витамин C).",kw:"sea,buckthorn,berries,hands"},
+  {t:"Переложите кашицу в стеклянную кастрюлю и добавьте немного тёплой воды.",kw:"pot,berries,water"},
+  {t:"Отдельно заварите травяной чай из расчёта 1 ложка заварки на человека.",kw:"teapot,tea,brewing"},
+  {t:"Разложите пюре по чашкам, залейте чаем, добавьте по желанию корицу и имбирь, аккуратно размешайте.",kw:"tea,cup,cinnamon"}
+ ]
+},
+
+/* ---------- ДЕСЕРТЫ ---------- */
+{
+ id:"berry_mousse", name:"Кокосовый мусс с ягодами", e:"🍓", meal:["десерт","перекус"],
+ time:10, kw:"coconut,mousse,berries,dessert", req:["coconut_milk","raspberry"],
+ ing:["coconut_milk","raspberry","blueberry","cinnamon"],
+ desc:"Лёгкий десерт без сахара — сладость дают только ягоды.",
+ steps:[
+  {t:"Поставьте банку кокосового молока в холодильник на несколько часов (лучше на ночь) — густая часть отделится от воды.",kw:"coconut,milk,fridge"},
+  {t:"Снимите густые сливки с поверхности и взбейте их венчиком до пышности.",kw:"cream,whisk,bowl"},
+  {t:"Разомните половину ягод вилкой и вмешайте в крем.",kw:"berries,fork,mixing"},
+  {t:"Разложите по стаканам, сверху выложите целые ягоды и присыпьте корицей.",kw:"dessert,glass,berries"},
+  {t:"Охладите 20 минут перед подачей.",kw:"mousse,dessert,glass"}
+ ]
+},
+{
+ id:"berry_sorbet", name:"Ягодный сорбет", e:"🫐", meal:["десерт","перекус"],
+ time:10, kw:"berry,sorbet,frozen,dessert", req:["blueberry","coconut_milk"],
+ ing:["blueberry","raspberry","coconut_milk","lemon"],
+ desc:"Мороженое без сахара и без молочки. Двух ингредиентов достаточно.",
+ steps:[
+  {t:"Замороженные ягоды (200 г) переложите в блендер.",kw:"frozen,berries,blender"},
+  {t:"Добавьте 80 мл кокосового молока и сок половины лимона.",kw:"coconut,milk,lemon"},
+  {t:"Пробейте до однородной густой массы, останавливаясь и соскабливая массу со стенок.",kw:"blending,sorbet,kitchen"},
+  {t:"Подавайте сразу — сорбет быстро тает.",kw:"sorbet,dessert,bowl"}
+ ]
+},
+{
+ id:"strawberry_cream", name:"Клубника с кокосовыми сливками", e:"🍓", meal:["десерт","перекус"],
+ time:5, kw:"strawberry,coconut,cream,dessert", req:["strawberry","coconut_milk"],
+ ing:["strawberry","coconut_milk","cinnamon"],
+ desc:"Пять минут — и десерт готов. Только если нет кожных заболеваний.",
+ note:"Клубнику и малину стоит исключить при кожных аутоиммунных проявлениях.",
+ steps:[
+  {t:"Охлаждённое кокосовое молоко разделите: густую часть снимите ложкой в миску.",kw:"coconut,cream,spoon"},
+  {t:"Взбейте сливки венчиком до лёгкой пышности.",kw:"whisk,cream,bowl"},
+  {t:"Клубнику нарежьте половинками и выложите в креманку.",kw:"strawberry,cutting,glass"},
+  {t:"Сверху добавьте кокосовые сливки и щепотку корицы.",kw:"dessert,cream,cinnamon"}
+ ]
+}
+];
+
+/* =========================================================
+   ВРЕМЯ
+   ========================================================= */
+const TIMES = [
+  {v:5,l:"5 мин",d:"мгновенно"},
+  {v:10,l:"10 мин",d:"очень быстро"},
+  {v:20,l:"20 мин",d:"быстро"},
+  {v:30,l:"30 мин",d:"полчаса"},
+  {v:45,l:"45 мин",d:"основательно"},
+  {v:60,l:"1 час",d:"час"},
+  {v:90,l:"1,5 часа",d:"не спеша"},
+  {v:120,l:"2 часа",d:"долго"}
+];
+function fmtTime(m){
+  if(m<60) return m+" мин";
+  if(m===60) return "1 час";
+  if(m===90) return "1,5 часа";
+  if(m===120) return "2 часа";
+  return Math.floor(m/60)+" ч "+(m%60?m%60+" мин":"");
+}
+
+const MEALS = [
+  {v:"завтрак",e:"🌅",t:"Завтрак",d:"плотный, белково-жировой"},
+  {v:"обед",e:"🍲",t:"Обед",d:"супы, салаты, второе"},
+  {v:"ужин",e:"🌙",t:"Ужин",d:"углеводы + белок"},
+  {v:"перекус",e:"🥑",t:"Перекус",d:"быстро и сытно"},
+  {v:"десерт",e:"🍓",t:"Десерт",d:"без сахара"}
+];
+
+/* =========================================================
+   СОСТОЯНИЕ + ХРАНИЛИЩЕ
+   ========================================================= */
+const LS_ING = "aip_ing_v1";
+const LS_START = "aip_start_v1";
+const LS_STRICT = "aip_strict_v1";
+
+let state = {
+  ing: {},          // {id: qty}
+  strict: false,
+  meal: null,
+  time: null,
+  lastList: []
+};
+
+try{
+  state.ing = JSON.parse(localStorage.getItem(LS_ING) || "{}") || {};
+  state.strict = localStorage.getItem(LS_STRICT) === "1";
+}catch(e){ state.ing = {}; }
+
+function saveIng(){ try{ localStorage.setItem(LS_ING, JSON.stringify(state.ing)); }catch(e){} }
+function saveStrict(){ try{ localStorage.setItem(LS_STRICT, state.strict?"1":"0"); }catch(e){} }
+
+/* =========================================================
+   ДЕНЬ АИП
+   ========================================================= */
+function todayISO(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function renderDay(){
+  let start = localStorage.getItem(LS_START);
+  if(!start){ start = todayISO(); localStorage.setItem(LS_START, start); }
+  const s = new Date(start+"T00:00:00");
+  const n = new Date(todayISO()+"T00:00:00");
+  const days = Math.floor((n - s)/86400000) + 1;
+  const el = document.getElementById("dayTxt");
+  el.textContent = days <= 0 ? "День 1" : "День " + days;
+}
+document.getElementById("dayChip").addEventListener("click", ()=>{
+  const cur = localStorage.getItem(LS_START) || todayISO();
+  const val = prompt("Дата начала АИП (ГГГГ-ММ-ДД):", cur);
+  if(val && /^\d{4}-\d{2}-\d{2}$/.test(val.trim())){
+    localStorage.setItem(LS_START, val.trim());
+    renderDay();
+  }
+});
+renderDay();
+
+/* =========================================================
+   ХЕШ ДЛЯ КАРТИНОК
+   ========================================================= */
+function hash(str){
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = ((h<<5)-h) + str.charCodeAt(i); h |= 0; }
+  return Math.abs(h) % 9000 + 100;
+}
+function photo(kw, emoji, cls){
+  const h = hash(kw);
+  const url = "https://loremflickr.com/640/480/" + encodeURIComponent(kw) + "?lock=" + h;
+  return '<div class="'+cls+'"><span class="ph-e">'+emoji+'</span>'+
+         '<img loading="lazy" src="'+url+'" alt="" onerror="this.remove()"></div>';
+}
+
+/* =========================================================
+   ЭКРАН 1: ИНГРЕДИЕНТЫ
+   ========================================================= */
+const ingWrap = document.getElementById("ingWrap");
+
+function renderIngs(filter){
+  filter = (filter||"").trim().toLowerCase();
+  let html = "";
+  CATS.forEach((catName, ci)=>{
+    const items = INGS.filter(i => i.c===ci && (!filter || i.n.toLowerCase().includes(filter)));
+    if(!items.length) return;
+    const selectedCount = items.filter(i => state.ing[i.id] !== undefined).length;
+    html += '<div class="cat'+(filter?'':'')+'" data-cat="'+ci+'">';
+    html += '<div class="cat-h"><span>'+catName+'</span><span style="display:flex;align-items:center;gap:8px">'+
+            (selectedCount?'<span class="cnt">'+selectedCount+'</span>':'')+
+            '<span class="arw">▼</span></span></div>';
+    html += '<div class="cat-body">';
+    items.forEach(i=>{
+      const sel = state.ing[i.id] !== undefined;
+      const q = sel ? state.ing[i.id] : "";
+      html += '<label class="ing'+(sel?' sel':'')+'" data-id="'+i.id+'">'+
+                '<span class="chk">✓</span>'+
+                '<span class="em">'+i.e+'</span>'+
+                '<span class="nm">'+i.n+'</span>'+
+                '<input class="qty" type="text" inputmode="numeric" placeholder="г/шт" value="'+q+'" data-q="'+i.id+'">'+
+              '</label>';
+    });
+    html += '</div></div>';
+  });
+  ingWrap.innerHTML = html || '<div class="empty"><span class="e">🔍</span>Ничего не найдено</div>';
+}
+
+ingWrap.addEventListener("click", e=>{
+  const h = e.target.closest(".cat-h");
+  if(h){ h.parentElement.classList.toggle("closed"); return; }
+});
+ingWrap.addEventListener("change", e=>{
+  const inp = e.target.closest(".qty");
+  if(inp){
+    const id = inp.dataset.q;
+    if(inp.value.trim()) state.ing[id] = inp.value.trim();
+    else if(state.ing[id] !== undefined) state.ing[id] = "";
+    saveIng();
+    return;
+  }
+});
+ingWrap.addEventListener("click", e=>{
+  const lab = e.target.closest(".ing");
+  if(!lab) return;
+  if(e.target.closest(".qty")) return;
+  e.preventDefault();
+  const id = lab.dataset.id;
+  if(state.ing[id] !== undefined){
+    delete state.ing[id];
+    lab.classList.remove("sel");
+    const q = lab.querySelector(".qty"); if(q) q.value = "";
+  } else {
+    state.ing[id] = "";
+    lab.classList.add("sel");
+  }
+  saveIng();
+  // обновим счётчик в заголовке категории
+  const cat = lab.closest(".cat");
+  const cnt = cat.querySelectorAll(".ing.sel").length;
+  const badge = cat.querySelector(".cat-h .cnt");
+  const hdr = cat.querySelector(".cat-h > span:last-child");
+  if(cnt){
+    if(badge) badge.textContent = cnt;
+    else hdr.insertAdjacentHTML("afterbegin",'<span class="cnt">'+cnt+'</span>');
+  } else if(badge){ badge.remove(); }
+});
+ingWrap.addEventListener("input", e=>{
+  const inp = e.target.closest(".qty");
+  if(inp){
+    const id = inp.dataset.q;
+    state.ing[id] = inp.value.trim();
+    saveIng();
+  }
+});
+
+document.getElementById("search").addEventListener("input", e=>{
+  renderIngs(e.target.value);
+});
+
+/* строгий режим */
+const st = document.getElementById("strictToggle");
+if(state.strict) st.classList.add("on");
+st.addEventListener("click", ()=>{
+  state.strict = !state.strict;
+  st.classList.toggle("on", state.strict);
+  saveStrict();
+});
+
+renderIngs();
+
+/* =========================================================
+   НАВИГАЦИЯ
+   ========================================================= */
+function go(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  document.getElementById(id).classList.add("on");
+  window.scrollTo({top:0,behavior:"instant"});
+}
+document.querySelectorAll("[data-go]").forEach(b=>{
+  b.addEventListener("click", ()=>go(b.dataset.go));
+});
+document.getElementById("backToList").addEventListener("click", ()=>go("s4"));
+
+document.getElementById("toMeal").addEventListener("click", ()=>go("s2"));
+document.getElementById("skipIng").addEventListener("click", ()=>{
+  state.ing = {};
+  saveIng();
+  renderIngs();
+  go("s2");
+});
+
+/* =========================================================
+   ЭКРАН 2: ПРИЁМ ПИЩИ
+   ========================================================= */
+const mealGrid = document.getElementById("mealGrid");
+mealGrid.innerHTML = MEALS.map(m =>
+  '<div class="big" data-meal="'+m.v+'"><span class="e">'+m.e+'</span><span class="t">'+m.t+'</span><span class="d">'+m.d+'</span></div>'
+).join("");
+mealGrid.addEventListener("click", e=>{
+  const b = e.target.closest("[data-meal]");
+  if(!b) return;
+  state.meal = b.dataset.meal;
+  const lbl = document.getElementById("mealLbl");
+  lbl.textContent = MEALS.find(m=>m.v===state.meal).t;
+  go("s3");
+});
+
+/* =========================================================
+   ЭКРАН 3: ВРЕМЯ
+   ========================================================= */
+const timeGrid = document.getElementById("timeGrid");
+timeGrid.innerHTML = TIMES.map(t =>
+  '<div class="tbtn" data-time="'+t.v+'">'+t.l+'<small>'+t.d+'</small></div>'
+).join("");
+timeGrid.addEventListener("click", e=>{
+  const b = e.target.closest("[data-time]");
+  if(!b) return;
+  state.time = parseInt(b.dataset.time,10);
+  buildResults();
+  go("s4");
+});
+document.getElementById("anyTime").addEventListener("click", ()=>{
+  state.time = null;
+  buildResults();
+  go("s4");
+});
+
+/* =========================================================
+   ЭКРАН 4: РЕЗУЛЬТАТЫ
+   ========================================================= */
+function haveIds(){
+  return Object.keys(state.ing).filter(k => state.ing[k] !== undefined && state.ing[k] !== null);
+}
+function hasIng(id){ return Object.prototype.hasOwnProperty.call(state.ing, id); }
+
+function buildResults(){
+  const have = haveIds();
+  const useIng = have.length > 0;
+
+  let list = R.filter(r => {
+    if(state.meal && !r.meal.includes(state.meal)) return false;
+    if(state.time && r.time > state.time) return false;
+    if(state.strict && r.starch) return false;
+    if(useIng){
+      // все обязательные ингредиенты должны быть в наличии
+      if(!r.req.every(id => hasIng(id))) return false;
+    }
+    return true;
+  });
+
+  // сортировка: сначала где больше совпавших ингредиентов, потом по времени
+  list.sort((a,b)=>{
+    const sa = a.ing.filter(hasIng).length;
+    const sb = b.ing.filter(hasIng).length;
+    if(useIng && sb !== sa) return sb - sa;
+    return a.time - b.time;
+  });
+
+  state.lastList = list;
+  renderResults(list, useIng, have.length);
+}
+
+function renderResults(list, useIng, haveCount){
+  const mealName = state.meal ? MEALS.find(m=>m.v===state.meal).t : "Все приёмы";
+  document.getElementById("resTitle").textContent = mealName;
+
+  const chips = document.getElementById("resChips");
+  let ch = '<span class="chip">Найдено: <b>'+list.length+'</b></span>';
+  if(useIng) ch += '<span class="chip">Продуктов выбрано: <b>'+haveCount+'</b></span>';
+  if(state.time) ch += '<span class="chip">До <b>'+fmtTime(state.time)+'</b></span>';
+  else ch += '<span class="chip">Время: <b>любое</b></span>';
+  if(state.strict) ch += '<span class="chip">🥔 <b>без крахмала</b></span>';
+  chips.innerHTML = ch;
+
+  const wrap = document.getElementById("resList");
+  if(!list.length){
+    wrap.innerHTML = '<div class="empty"><span class="e">🍽️</span>'+
+      'Ничего не нашлось.<br>Попробуйте увеличить время, сменить приём пищи или добавить продукты.'+
+      '<br><br><button class="btn ghost" onclick="document.querySelector(\'#s4 .back\').click()">‹ Назад</button></div>';
+    return;
+  }
+
+  wrap.innerHTML = list.map((r,idx)=>{
+    const ingTxt = r.ing.map(id=>{
+      const it = ING_MAP[id];
+      if(!it) return "";
+      const ok = hasIng(id);
+      return '<span class="'+(ok?'ok':'no')+'">'+it.e+' '+it.n+'</span>';
+    }).join(" · ");
+
+    const tags = r.meal.slice(0,3).map(m=>{
+      const mm = MEALS.find(x=>x.v===m);
+      return '<span class="tag">'+mm.e+' '+mm.t+'</span>';
+    }).join("");
+
+    const starchTag = r.starch ? '<span class="tag warn">⚠️ крахмалистый овощ</span>' : '';
+
+    return '<div class="card" data-idx="'+idx+'">'+
+      photo(r.kw, r.e, "ph") +
+      '<div class="tm">⏱ '+fmtTime(r.time)+'</div>'+
+      '<div class="body">'+
+        '<h3>'+r.name+'</h3>'+
+        '<div class="meta">'+tags+starchTag+'</div>'+
+        '<div class="ings">'+ingTxt+'</div>'+
+      '</div></div>';
+  }).join("");
+
+  wrap.querySelectorAll(".card").forEach(c=>{
+    c.addEventListener("click", ()=>{
+      openRecipe(list[parseInt(c.dataset.idx,10)]);
+    });
+  });
+}
+
+/* =========================================================
+   ЭКРАН 5: РЕЦЕПТ
+   ========================================================= */
+function openRecipe(r){
+  const v = document.getElementById("recipeView");
+
+  const ingHtml = r.ing.map(id=>{
+    const it = ING_MAP[id];
+    if(!it) return "";
+    const ok = hasIng(id);
+    const q = ok && state.ing[id] ? " — " + state.ing[id] : "";
+    return '<div><span class="st '+(ok?'y':'n')+'">'+(ok?'✓':'○')+'</span><span>'+it.e+' '+it.n+'<span style="color:#7d9288">'+q+'</span></span></div>';
+  }).join("");
+
+  const stepsHtml = r.steps.map((s,i)=>
+    '<div class="step">'+
+      '<div class="num">'+(i+1)+'</div>'+
+      '<div class="line"></div>'+
+      '<div class="cont">'+
+        photo(s.kw, r.e, "sph")+
+        '<div class="txt">'+s.t+'</div>'+
+      '</div>'+
+    '</div>'
+  ).join("");
+
+  const tags = r.meal.map(m=>{
+    const mm = MEALS.find(x=>x.v===m);
+    return '<span class="tag">'+mm.e+' '+mm.t+'</span>';
+  }).join("");
+
+  v.innerHTML =
+    '<div class="hero">'+
+      '<span class="ph-e">'+r.e+'</span>'+
+      '<img src="https://loremflickr.com/900/700/'+encodeURIComponent(r.kw)+'?lock='+hash(r.kw)+'" alt="" onerror="this.remove()">'+
+      '<div class="h-info"><h2>'+r.name+'</h2><div class="h-meta">'+
+        '<span class="tag">⏱ '+fmtTime(r.time)+'</span>'+tags+
+        (r.starch?'<span class="tag warn">⚠️ крахмалистый</span>':'')+
+      '</div></div>'+
+    '</div>'+
+
+    (r.desc ? '<p class="sub" style="margin-top:14px">'+r.desc+'</p>' : '')+
+
+    '<div class="sec-t">Ингредиенты</div>'+
+    '<div class="ing-list">'+ingHtml+'</div>'+
+
+    '<div class="sec-t">Приготовление</div>'+
+    '<div class="tl">'+stepsHtml+'</div>'+
+
+    (r.note ? '<div class="note">💡 '+r.note+'</div>' : '');
+
+  go("s5");
+}
+
+/* =========================================================
+   СТАРТ
+   ========================================================= */
+// если есть сохранённые ингредиенты — покажем их количество в шапке
+(function(){
+  const n = haveIds().length;
+  if(n){
+    const btn = document.getElementById("toMeal");
+    btn.textContent = "Далее → (выбрано: "+n+")";
+  }
+})();
+</script>
+</body>
+</html>
